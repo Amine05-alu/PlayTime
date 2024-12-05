@@ -1,0 +1,41 @@
+<!-- templates/editar_perfil.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil - Reserva Deportiva</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <a href="{% url 'home' %}">Reserva Deportiva</a>
+            </div>
+            <ul>
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li><a href="{% url 'ver_perfil' %}">Ver Perfil</a></li>
+                <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="edit-profile-container">
+        <div class="form-wrapper">
+            <h2>Editar perfil</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="form-group">
+                    <button type="submit" class="btn">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Reserva Deportiva. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

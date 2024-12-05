@@ -1,0 +1,5 @@
+.image-section img {
+    max-width: 100%; /* La imagen ocupará el ancho completo de su contenedor */
+    height: auto;
+    border-radius: 10px; /* Bordes redondeados, opcional */
+}
