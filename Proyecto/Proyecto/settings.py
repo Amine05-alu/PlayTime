@@ -29,7 +29,10 @@ SECRET_KEY = 'django-insecure-cf!z)qo#_y62@wg1i^k$6_=ze8quicb+wc5nc=5(vau)y1yvx2
 # Modo de depuración (activar sólo en desarrollo)
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["timeplay.duckdns.org"]
+
+CSRF_TRUSTED_ORIGINS = ['https://timeplay.duckdns.org']  # Añade el dominio aquí
+
 
 # Definición de aplicaciones instaladas
 INSTALLED_APPS = [
