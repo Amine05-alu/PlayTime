@@ -11,14 +11,14 @@
            background-color: #f0f0f0; /* Color de fondo más claro */
        }
        .navbar {
-           background-color: #06528b; /* Gris oscuro */
+           background-color: #343a40; /* Azul oscuro */
        }
        .navbar-brand, .nav-link {
            color: white !important;
        }
        .hero-section {
            padding: 50px 0;
-           background-color: #577086; /* Gris medio */
+           background-color: #335b7e; /* Gris medio */
            color: white;
            text-align: center;
            position: relative;
@@ -38,7 +38,7 @@
 
        /* Estilo para el botón de "Haz tu reserva ahora" */
        .btn-reserva {
-           background-color: #233a7a; /* Gris oscuro para el fondo */
+           background-color: #495057; /* Gris oscuro para el fondo */
            color: white;
            padding: 15px 35px; /* Aumento de tamaño */
            font-size: 20px; /* Tamaño de fuente más discreto */
@@ -105,44 +105,79 @@
 <body>
    <!-- Barra de navegación -->
    <nav class="navbar navbar-expand-lg navbar-dark">
-       <div class="container">
-           <a class="navbar-brand" href="#">PLAYTIME</a>
-           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-               <span class="navbar-toggler-icon"></span>
-           </button>
-           <div class="collapse navbar-collapse" id="navbarNav">
-               <ul class="navbar-nav ms-auto">
-                   {% if user.is_authenticated %}
-                       <li class="nav-item dropdown">
-                           <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                               <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                   {{ user.first_name|default:user.username|first|upper }}
-                               </div>
-                               {{ user.first_name|default:user.username }}
-                           </a>
-                           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                               <li><a class="dropdown-item" href="{% url 'profile' %}">Mi perfil</a></li>
-                               <!-- Formulario para Cerrar sesión -->
-                               <li>
-                                   <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                                       {% csrf_token %}
-                                       <button type="submit" class="dropdown-item">Cerrar sesión</button>
-                                   </form>
-                               </li>
-                           </ul>
-                       </li>
-                   {% else %}
-                       <li class="nav-item">
-                           <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
-                       </li>
-                       <li class="nav-item">
-                           <a class="nav-link" href="{% url 'register' %}">Registrarse</a>
-                       </li>
-                   {% endif %}
-               </ul>
-           </div>
-       </div>
-   </nav>
+    <div class="container">
+        <a class="navbar-brand" >PLAYTIME</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                {{ user.first_name|default:user.username|first|upper }}
+                            </div>
+                            {{ user.first_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">Mi perfil</a></li>
+                            <!-- Formulario para cerrar sesión -->
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">Registrarse</a>
+                    </li>
+                {% endif %}
+            </ul>
+
+            <!-- Buscador de campos por deporte -->
+            <form method="GET" action="{% url 'index' %}" class="d-flex ms-3">
+                <input class="form-control me-2" type="search" name="buscar_deporte" placeholder="Buscar por deporte..." aria-label="Buscar">
+                <button class="btn btn-outline-light" type="submit">Buscar</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<!-- Sección de resultados para el buscador de deportes -->
+{% if buscar_deporte %}
+<section class="container mt-5">
+    <h2 class="mb-4">Resultados para "{{ buscar_deporte }}":</h2>
+    {% if resultados %}
+        <div class="row">
+            {% for campo in resultados %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ campo.nombre }}</h5>
+                            <p class="card-text">
+                                <strong>Instalación:</strong> {{ campo.instalacion.nombre }}<br>
+                                <strong>Deporte:</strong> {{ campo.deporte }}<br>
+                                <strong>Ubicación:</strong> {{ campo.instalacion.direccion }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No se encontraron resultados para "{{ buscar_deporte }}".
+        </div>
+    {% endif %}
+</section>
+{% endif %}
 
    <!-- Sección principal con un título -->
    <section class="hero-section">
@@ -150,22 +185,17 @@
            <h1>Reserva fácil y rápido</h1>
            <p>¡Comienza a reservar con nuestro sistema sencillo y seguro!</p>
            {% if user.is_authenticated %}
-               <div class="button-container text-center">
-                   <a href="{% url 'crear_reserva' %}" class="btn-reserva">Haz tu reserva ahora</a>
-                </div>
-           {% else %}
-               <div class="alert alert-info" role="alert">
-                   ¡Inicia sesión para hacer tu reserva!
-               </div>
-               <div class="button-container text-center">
-                   <a href="{% url 'login' %}" class="btn-reserva">Inicia sesión para reservar</a>
-               </div>
-           {% endif %}
-
-           <!-- Botón HOLA que redirige a la página de Instalaciones -->
            <div class="button-container text-center">
-               <a href="{% url 'lista_instalaciones' %}" class="btn-hola">HOLA</a>
+               <a href="{% url 'lista_instalaciones' %}" class="btn-hola">Haz tu reserva ahora</a>
            </div>
+           {% else %}
+           <div class="alert alert-info" role="alert">
+               ¡Inicia sesión para hacer tu reserva!
+           </div>
+           <div class="button-container text-center">
+               <a href="{% url 'login' %}" class="btn-reserva">Inicia sesión para reservar</a>
+           </div>
+           {% endif %}
        </div>
    </section>
 
@@ -195,6 +225,52 @@
            </div>
        </div>
    </section>
+
+   <!-- Sección de últimas reservas confirmadas -->
+   <div class="reservas py-5">
+       {% if messages %}
+           <div class="container mt-3">
+               {% for message in messages %}
+                   <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                       {{ message }}
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                   </div>
+               {% endfor %}
+           </div>
+       {% endif %}
+
+       <div class="container">
+           <h2 class="text-center mb-4">Últimas Reservas Confirmadas</h2>
+           <div class="row">
+               {% for reserva in reservas %}
+                   <div class="col-md-4 mb-4">
+                       <div class="card shadow-sm border-light">
+                           <div class="card-body">
+                               <h5 class="card-title text-primary">{{ reserva.usuario.username }}</h5>
+                               <p class="card-text">
+                                   <strong>Cancha:</strong> {{ reserva.cancha.nombre }} <br>
+                                   <strong>Instalación:</strong> {{ reserva.cancha.instalacion.nombre }} <br>
+                                   <strong>Fecha:</strong> {{ reserva.fecha_hora_inicio|date:"d/m/Y" }} <br>
+                                   <strong>Hora:</strong> {{ reserva.fecha_hora_inicio|time:"H:i" }}
+                               </p>
+                               <form method="POST" action="{% url 'index' %}">
+                                   {% csrf_token %}
+                                   <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
+                                   <button type="submit" name="cancelar_reserva" class="btn btn-danger">Cancelar Reserva</button>
+                               </form>
+                           </div>
+                       </div>
+                   </div>
+               {% empty %}
+                   <div class="col-12">
+                       <div class="alert alert-info text-center" role="alert">
+                           No tienes reservas recientes.
+                       </div>
+                   </div>
+               {% endfor %}
+           </div>
+       </div>
+   </div>
 
    <!-- Pie de página -->
    <footer class="footer">

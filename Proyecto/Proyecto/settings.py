@@ -57,8 +57,8 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+        'rest_framework.permissions.AllowAny',  # Cambiar aquí según sea necesario
+    ],
 }
 
 # Configuración de redirecciones de login
@@ -121,12 +121,15 @@ USE_L10N = True
 USE_TZ = True
 
 # Configuración de archivos estáticos (CSS, JavaScript, imágenes)
-STATIC_URL = '/static/'
+STATIC_URL = '/static/'  # URL pública para acceder a los archivos estáticos
 
 # Directorios donde Django buscará archivos estáticos
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'Aplicacion1', 'static'),  # Cambié esta línea para que apunte a la carpeta estática dentro de Aplicacion1
+    os.path.join(BASE_DIR, 'Aplicacion1', 'static'),  # Los directorios de las aplicaciones
 ]
+
+# Directorio donde Django almacenará los archivos estáticos recopilados
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # Directorio para archivos estáticos compilados
 
 
 # Tipo de campo de clave primaria por defecto

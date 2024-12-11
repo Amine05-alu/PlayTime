@@ -30,9 +30,10 @@ class Campo(models.Model):
     capacidad_jugadores = models.IntegerField()
     disponible = models.BooleanField(default=True)
     instalacion = models.ForeignKey(Instalacion, on_delete=models.CASCADE, related_name='canchas')
+    deporte = models.CharField(max_length=50, default='futbol')  # Valor por defecto "futbol"
 
     def __str__(self):
-        return f'{self.nombre} - {self.instalacion.nombre}'
+        return f'{self.nombre} - {self.instalacion.nombre} ({self.deporte})'
 
 # Modelo de Reserva asociado a Campo y Usuario
 # Aplicacion1/models.py
@@ -49,8 +50,9 @@ class Reserva(models.Model):
     comentario = models.TextField(blank=True)
 
     class Meta:
-        unique_together = ('cancha', 'fecha_hora_inicio')
-
+        indexes = [
+            models.Index(fields=['-fecha_hora_inicio']),  # Índice para ordenar por fecha
+        ]
     def __str__(self):
         return f'Reserva de {self.usuario.username} en {self.cancha.nombre} el {self.fecha_hora_inicio}'
     

@@ -1,8 +1,6 @@
 from django.views.generic import ListView, DetailView
-from .models import Instalacion, Campo, Reserva, Perfil
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView
-from .forms import ReservaForm, CustomUserCreationForm, PerfilForm
 from django.http import JsonResponse
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -13,26 +11,168 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Q
-from .forms import BusquedaInstalacionesForm
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.utils.timezone import make_aware
+from rest_framework.permissions import AllowAny
+from rest_framework import viewsets
+from rest_framework import serializers
+from django.utils.dateparse import parse_date
+from django.utils.timezone import now
 
+from .models import Instalacion, Campo, Reserva, Perfil
+from .forms import ReservaForm, CustomUserCreationForm, PerfilForm, BusquedaInstalacionesForm
+
+class CampoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campo
+        fields = '__all__'  # Esto serializa todos los campos del modelo. Puedes especificar los campos si prefieres.
+
+class HorariosDisponiblesViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Campo.objects.all()  # Esto proporciona el queryset que espera DRF
+    serializer_class = CampoSerializer  # Asegúrate de tener un serializador de Campo si deseas usar este enfoque
+
+# ===========================
+# Vista para obtener horarios disponibles (APIView)
+# ===========================
+class HorariosDisponiblesAPIView(APIView):
+    permission_classes = [AllowAny]  # Desactiva la validación de permisos
+    
+    def get(self, request, fecha):
+        try:
+            # Convertir la fecha desde el formato esperado
+            fecha_dt = datetime.strptime(fecha, "%Y-%m-%d").date()
+        except ValueError:
+            return Response({"error": "Formato de fecha inválido. Use AAAA-MM-DD."}, status=400)
+
+        campos = Campo.objects.all()
+        resultado = []
+
+        for campo in campos:
+            horarios = [
+                {
+                    'hora': f'{hora}:00',
+                    'disponible': not Reserva.objects.filter(
+                        cancha=campo,
+                        fecha_hora_inicio=make_aware(datetime.combine(fecha_dt, time(hora)))
+                    ).exists()
+                }
+                for hora in range(8, 23)
+            ]
+
+            resultado.append({
+                'id': campo.id,
+                'nombre': campo.nombre,
+                'tipo_campo': campo.tipo_campo,
+                'capacidad_jugadores': campo.capacidad_jugadores,
+                'horarios': horarios
+            })
+
+        return Response({'campos': resultado})
+
+
+# ===========================
+# Vista para obtener horarios disponibles (función basada en vista)
+# ===========================
+@api_view(['GET'])
+def horarios_disponibles(request, fecha):
+    try:
+        fecha_dt = datetime.strptime(fecha, "%Y-%m-%d").date()
+    except ValueError:
+        return Response({"error": "Formato de fecha inválido. Use AAAA-MM-DD."}, status=400)
+
+    campos = Campo.objects.all()
+    resultado = []
+
+    for campo in campos:
+        horarios = [
+            {
+                'hora': f'{hora}:00',
+                'disponible': not Reserva.objects.filter(
+                    cancha=campo,
+                    fecha_hora_inicio=make_aware(datetime.combine(fecha_dt, time(hora)))
+                ).exists()
+            }
+            for hora in range(8, 23)
+        ]
+
+        resultado.append({
+            'id': campo.id,
+            'nombre': campo.nombre,
+            'tipo_campo': campo.tipo_campo,
+            'capacidad_jugadores': campo.capacidad_jugadores,
+            'horarios': horarios
+        })
+
+    return Response({'campos': resultado})
+
+
+# ===========================
+# Vista para obtener horarios disponibles por campo y fecha
+# ===========================
+@api_view(['GET'])
+def obtener_horarios_por_campo_y_fecha(request, campo_id, fecha):
+    try:
+        fecha_dt = datetime.strptime(fecha, "%Y-%m-%d").date()
+        campo = get_object_or_404(Campo, id=campo_id)
+
+        horarios_disponibles = [
+            datetime.combine(fecha_dt, time(hour)) for hour in range(8, 23)
+        ]
+
+        reservas_existentes = Reserva.objects.filter(
+            cancha=campo,
+            fecha_hora_inicio__date=fecha_dt
+        ).values_list('fecha_hora_inicio', flat=True)
+
+        horarios_libres = [
+            horario for horario in horarios_disponibles if horario not in reservas_existentes
+        ]
+
+        return Response({
+            "campo_id": campo.id,
+            "nombre": campo.nombre,
+            "tipo_campo": campo.tipo_campo,
+            "capacidad_jugadores": campo.capacidad_jugadores,
+            "horarios": [
+                {
+                    "hora": horario.strftime("%H:%M"),
+                    "disponible": horario in horarios_libres
+                }
+                for horario in horarios_disponibles
+            ]
+        })
+
+    except Campo.DoesNotExist:
+        return Response({"error": "El campo especificado no existe."}, status=404)
+    except ValueError:
+        return Response({"error": "Formato de fecha inválido. Use AAAA-MM-DD."}, status=400)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ===========================
+# Vista para obtener horas disponibles por campo
+# ===========================
+@api_view(['GET'])
 def obtener_horas_disponibles(request, campo_id):
     campo = get_object_or_404(Campo, id=campo_id)
-    today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)  # Asegurar el día actual
+    today = timezone.now().date()  # Asegurarse de que se obtiene el día actual
     horarios_disponibles = [today + timedelta(hours=hour) for hour in range(8, 23)]
-    
-    # Convertir horas reservadas a un conjunto para comparación
+
+    # Filtrar horas ya reservadas
     horas_reservadas = set(
-        Reserva.objects.filter(cancha=campo, fecha_hora_inicio__date=today.date())
+        Reserva.objects.filter(cancha=campo, fecha_hora_inicio__date=today)
         .values_list('fecha_hora_inicio', flat=True)
     )
-    
-    # Filtrar horas libres
-    horas_libres = [hora for hora in horarios_disponibles if hora not in horas_reservadas]
-    
-    return JsonResponse({'horas_disponibles': [hora.strftime("%H:%M") for hora in horas_libres]})
 
-from datetime import datetime
+    # Filtrar las horas libres
+    horas_libres = [hora for hora in horarios_disponibles if hora not in horas_reservadas]
+
+    # Devolver las horas disponibles
+    return JsonResponse({'horas_disponibles': [hora.strftime("%H:%M") for hora in horas_libres]})
 
 def reservar_campo_confirmado(request, campo_id):
     campo = Campo.objects.get(id=campo_id)
@@ -96,19 +236,32 @@ def reservar_campo_confirmado(request, campo_id):
 
 def reservar_campo(request, campo_id):
     campo = get_object_or_404(Campo, id=campo_id)
-    today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    horarios_disponibles = [today + timedelta(hours=hour) for hour in range(8, 23)]
-    
+    today = now().date()  # Obtenemos solo la fecha actual
+
+    # Verificamos si hay un parámetro de fecha en la solicitud GET
+    dia_reserva_str = request.GET.get('fecha')
+    dia_reserva = parse_date(dia_reserva_str) if dia_reserva_str else today  # Si no hay fecha, usamos la de hoy
+
+    # Generar los horarios disponibles para el día seleccionado
+    horarios_disponibles = [
+        datetime.combine(dia_reserva, datetime.min.time()) + timedelta(hours=hour)
+        for hour in range(8, 23)
+    ]
+
     # Filtrar las horas ya reservadas
     horas_reservadas = set(
-        Reserva.objects.filter(cancha=campo, fecha_hora_inicio__date=today.date())
-        .values_list('fecha_hora_inicio', flat=True)
+        Reserva.objects.filter(
+            cancha=campo,
+            fecha_hora_inicio__date=dia_reserva
+        ).values_list('fecha_hora_inicio', flat=True)
     )
-    
+
     # Verificar si el formulario ha sido enviado
     if request.method == 'POST':
         hora_reserva_str = request.POST.get('hora_reserva')
-        hora_reserva = datetime.strptime(hora_reserva_str, "%H:%M").replace(year=timezone.now().year, month=timezone.now().month, day=timezone.now().day)
+        hora_reserva = datetime.strptime(hora_reserva_str, "%H:%M").replace(
+            year=dia_reserva.year, month=dia_reserva.month, day=dia_reserva.day
+        )
 
         # Verificar si la hora ya está reservada
         if hora_reserva in horas_reservadas:
@@ -134,6 +287,7 @@ def reservar_campo(request, campo_id):
     # Pasar la información de los horarios disponibles y reservados al template
     return render(request, 'reservar_campo.html', {
         'campo': campo,
+        'dia_reserva': dia_reserva,
         'horarios_disponibles': horarios_disponibles,
         'horas_reservadas': horas_reservadas,
     })
@@ -306,7 +460,33 @@ def ver_perfil(request):
 
 # Vista principal (Índice)
 def index(request):
-    return render(request, 'index.html')
+    reservas = []
+    resultados = None
+    buscar_deporte = request.GET.get('buscar_deporte', '').strip()
+
+    if request.user.is_authenticated:
+        # Filtrar las reservas para el usuario autenticado
+        reservas = Reserva.objects.filter(usuario=request.user).order_by('-fecha_hora_inicio')  # Opcionalmente, ordenarlas
+
+        # Cancelar la reserva si la solicitud es POST
+        if request.method == 'POST' and 'cancelar_reserva' in request.POST:
+            reserva_id = request.POST.get('reserva_id')
+            try:
+                reserva = Reserva.objects.get(id=reserva_id, usuario=request.user)
+                reserva.delete()
+                messages.success(request, 'Reserva cancelada exitosamente.')
+            except Reserva.DoesNotExist:
+                messages.error(request, 'Reserva no encontrada o no es tuya.')
+
+    # Filtrar instalaciones o campos según el deporte buscado
+    if buscar_deporte:
+        resultados = Campo.objects.filter(deporte__icontains=buscar_deporte)
+
+    return render(request, 'index.html', {
+        'reservas': reservas,
+        'resultados': resultados,
+        'buscar_deporte': buscar_deporte,
+    })
 
 # Vista para crear una reserva
 @login_required
