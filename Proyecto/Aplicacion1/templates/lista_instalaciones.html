@@ -120,7 +120,6 @@
                                 {{ user.first_name|default:user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="{% url 'profile' %}">Mi perfil</a></li>
                                 <!-- Formulario para cerrar sesión -->
                                 <li>
                                     <form action="{% url 'logout' %}" method="post" style="display:inline;">
