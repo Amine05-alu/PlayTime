@@ -47,4 +47,7 @@ urlpatterns = [
     path('api/horarios_disponibles/<str:fecha>/', views.horarios_disponibles, name='horarios_disponibles'),
     path('api/horarios_por_campo/<int:campo_id>/<str:fecha>/', views.obtener_horarios_por_campo_y_fecha, name='obtener_horarios_por_campo_y_fecha'),
     path('api/horas_disponibles/<int:campo_id>/', views.obtener_horas_disponibles, name='obtener_horas_disponibles'),
+    path('mis_reservas/', views.mis_reservas, name='mis_reservas'),
+    path('modificar_reserva/<int:reserva_id>/', views.modificar_reserva, name='modificar_reserva'),
+    path('disponible_instalaciones/', views.disponible_instalaciones, name='disponible_instalaciones'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

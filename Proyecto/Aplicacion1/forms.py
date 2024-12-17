@@ -118,3 +118,15 @@ class BusquedaInstalacionesForm(forms.Form):
         # Añadir más deportes si es necesario
     ]
     deporte = forms.ChoiceField(choices=TIPO_DEPORTE_CHOICES, required=False)
+
+class ModificarReservaForm(forms.ModelForm):
+    class Meta:
+        model = Reserva
+        fields = ['cancha', 'fecha_hora_inicio']
+        widgets = {
+            'fecha_hora_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+        labels = {
+            'cancha': 'Cancha',
+            'fecha_hora_inicio': 'Fecha y Hora',
+        }

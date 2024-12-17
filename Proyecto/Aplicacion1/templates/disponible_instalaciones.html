@@ -100,6 +100,62 @@
         background-color: #FF4500; /* Cambio de color al pasar el mouse */
         transform: translateY(-3px);
     }
+    .hero-section {
+        padding: 50px 0;
+        background-color: #577086; /* Gris medio */
+        color: white;
+        text-align: center;
+        position: relative;
+    }
+
+    .features-section {
+        padding: 40px 0;
+    }
+
+    .list-group-item {
+        background-color: #ffffff; /* Fondo blanco para los elementos */
+        border: none; /* Eliminamos bordes */
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        border-radius: 5px; /* Bordes redondeados */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa; /* Cambio de fondo en hover */
+        cursor: default; /* Cursors no clickable */
+    }
+
+    .list-group-item:before {
+        content: "•"; /* Marcador en lugar del icono de enlace */
+        font-size: 24px;
+        color: #333;
+        display: inline-block;
+        width: 30px;
+        text-align: center;
+        margin-right: 10px;
+    }
+
+    /* Estilo para el botón "Reserva Nueva" */
+    .btn-reserva-nueva {
+        display: block;
+        background-color: #006400;
+        color: white;
+        padding: 15px 35px;
+        font-size: 18px;
+        border-radius: 5px;
+        text-transform: uppercase;
+        text-align: center;
+        text-decoration: none;
+        margin: 20px auto;
+        width: fit-content;
+        transition: all 0.3s ease;
+    }
+
+    .btn-reserva-nueva:hover {
+        background-color: #228B22;
+        transform: translateY(-3px);
+    }
 </style>
 
 <body>
@@ -141,20 +197,18 @@
             </div>
         </div>
     </nav>
-   <div class="container mt-5">
-       <h1>Instalaciones deportivas</h1>
-       <ul class="list-group">
-           {% for instalacion in instalaciones %}
-               <li class="list-group-item">
-                   <a href="{% url 'detalle_instalacion' instalacion.id %}">
-                       {{ instalacion.nombre }}
-                   </a>
-               </li>
-           {% empty %}
-               <li class="list-group-item">No hay instalaciones disponibles.</li>
-           {% endfor %}
-       </ul>
-   </div>
+    <div class="container mt-5">
+        <h1>Instalaciones deportivas</h1>
+        <ul class="list-group">
+            {% for instalacion in instalaciones %}
+                <li class="list-group-item">
+                    {{ instalacion.nombre }}
+                </li>
+            {% empty %}
+                <li class="list-group-item">No hay instalaciones disponibles.</li>
+            {% endfor %}
+        </ul>
+    </div>
 
    <footer class="footer">
        <p>&copy; 2024 Sistema de Reservas. Todos los derechos reservados.</p>

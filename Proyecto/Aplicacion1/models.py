@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
+from datetime import timedelta
 
 class Perfil(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -63,6 +65,17 @@ class Reserva(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # Llama a clean antes de guardar
         super().save(*args, **kwargs)
+
+    def clean(self):
+        # Validar conflictos de horarios
+        reservas_conflictivas = Reserva.objects.filter(
+            cancha=self.cancha,
+            fecha_hora_inicio__lt=self.fecha_hora_inicio + timedelta(hours=1),
+            fecha_hora_inicio__gte=self.fecha_hora_inicio,
+        ).exclude(id=self.id)
+
+        if reservas_conflictivas.exists():
+            raise ValidationError('Ya existe una reserva en este horario para la cancha seleccionada.')
 
 @receiver(post_save, sender=User)
 def crear_perfil(sender, instance, created, **kwargs):

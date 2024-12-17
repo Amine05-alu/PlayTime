@@ -21,9 +21,43 @@ from rest_framework import viewsets
 from rest_framework import serializers
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
+from .forms import ModificarReservaForm
 
 from .models import Instalacion, Campo, Reserva, Perfil
 from .forms import ReservaForm, CustomUserCreationForm, PerfilForm, BusquedaInstalacionesForm
+
+def disponible_instalaciones(request):
+    instalaciones = Instalacion.objects.all()
+    return render(request, 'disponible_instalaciones.html', {'instalaciones': instalaciones})
+
+def modificar_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+
+    if request.method == 'POST':
+        form = ModificarReservaForm(request.POST, instance=reserva)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'La reserva ha sido modificada con éxito.')
+            return redirect('mis_reservas')
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario.')
+    else:
+        form = ModificarReservaForm(instance=reserva)
+
+    return render(request, 'modificar_reserva.html', {'form': form, 'reserva': reserva})
+
+def mis_reservas(request):
+    if request.method == 'POST' and 'cancelar_reserva' in request.POST:
+        reserva_id = request.POST.get('reserva_id')
+        try:
+            reserva = Reserva.objects.get(id=reserva_id, usuario=request.user)
+            reserva.delete()
+            messages.success(request, 'La reserva ha sido cancelada con éxito.')
+        except Reserva.DoesNotExist:
+            messages.error(request, 'No se pudo encontrar la reserva.')
+
+    reservas = Reserva.objects.filter(usuario=request.user).order_by('-fecha_hora_inicio')
+    return render(request, 'mis_reservas.html', {'reservas': reservas})
 
 class CampoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -187,21 +221,23 @@ def reservar_campo_confirmado(request, campo_id):
         .values_list('fecha_hora_inicio', flat=True)
     )
 
-    # Filtrar las horas libres
-    horas_libres = [hora for hora in horarios_disponibles if hora not in horas_reservadas]
-
     hora_reserva = None  # Inicializamos la variable
     comentarios = "No hay comentarios."  # Comentario por defecto
 
     # Si la solicitud es POST (cuando se realiza una reserva)
     if request.method == 'POST':
-        hora_reserva_str = request.POST.get('hora_reserva')
+        hora_reserva_str = request.POST.get('hora_reserva', None)  # Esto maneja el caso de que no llegue una hora
         comentarios = request.POST.get('comentarios', "No hay comentarios.")
 
-        # Convertir la hora seleccionada a un objeto datetime
-        hora_reserva = datetime.strptime(hora_reserva_str, "%H:%M").replace(
-            year=today.year, month=today.month, day=today.day
-        )
+        if hora_reserva_str:
+            # Convertir la hora seleccionada a un objeto datetime
+            hora_reserva = datetime.strptime(hora_reserva_str, "%H:%M").replace(
+                year=today.year, month=today.month, day=today.day
+            )
+        else:
+            # Manejar el caso donde no se selecciona ninguna hora
+            messages.error(request, "Debe seleccionar una hora para reservar.")
+            return redirect('reservar_campo_confirmado', campo_id=campo.id)
 
         # Crear la reserva en la base de datos
         Reserva.objects.create(
@@ -223,7 +259,7 @@ def reservar_campo_confirmado(request, campo_id):
 
     return render(request, 'reservar_campo_confirmado.html', {
         'campo': campo,
-        'horarios_disponibles': horas_libres,
+        'horarios_disponibles': horarios_disponibles,  # Usamos la lista generada al principio
         'horas_reservadas': horas_reservadas,
         'hora_reserva': hora_reserva,
         'comentarios': comentarios,
