@@ -22,9 +22,15 @@ from rest_framework import serializers
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from .forms import ModificarReservaForm
+from django.core.exceptions import ValidationError
 
 from .models import Instalacion, Campo, Reserva, Perfil
 from .forms import ReservaForm, CustomUserCreationForm, PerfilForm, BusquedaInstalacionesForm
+
+
+def info_instalacion(request, id):
+    instalacion = get_object_or_404(Instalacion, id=id)
+    return render(request, 'info_instalacion.html', {'instalacion': instalacion})
 
 def disponible_instalaciones(request):
     instalaciones = Instalacion.objects.all()
@@ -210,48 +216,53 @@ def obtener_horas_disponibles(request, campo_id):
 
 def reservar_campo_confirmado(request, campo_id):
     campo = Campo.objects.get(id=campo_id)
+    today = timezone.now().date()
 
-    # Generar los horarios disponibles para el campo
-    today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    # Obtener los horarios disponibles
     horarios_disponibles = [today + timedelta(hours=hour) for hour in range(8, 23)]
 
     # Obtener las horas reservadas para el campo
     horas_reservadas = set(
-        Reserva.objects.filter(cancha=campo, fecha_hora_inicio__date=today.date())
+        Reserva.objects.filter(cancha=campo, fecha_hora_inicio__date=today)
         .values_list('fecha_hora_inicio', flat=True)
     )
 
     hora_reserva = None  # Inicializamos la variable
-    comentarios = "No hay comentarios."  # Comentario por defecto
+    comentarios = request.POST.get('comentarios', "No hay comentarios.")  # Comentario por defecto
 
-    # Si la solicitud es POST (cuando se realiza una reserva)
     if request.method == 'POST':
-        hora_reserva_str = request.POST.get('hora_reserva', None)  # Esto maneja el caso de que no llegue una hora
-        comentarios = request.POST.get('comentarios', "No hay comentarios.")
+        hora_reserva_str = request.POST.get('hora_reserva', None)
 
-        if hora_reserva_str:
-            # Convertir la hora seleccionada a un objeto datetime
-            hora_reserva = datetime.strptime(hora_reserva_str, "%H:%M").replace(
-                year=today.year, month=today.month, day=today.day
-            )
-        else:
-            # Manejar el caso donde no se selecciona ninguna hora
+        if not hora_reserva_str:
             messages.error(request, "Debe seleccionar una hora para reservar.")
             return redirect('reservar_campo_confirmado', campo_id=campo.id)
 
-        # Crear la reserva en la base de datos
-        Reserva.objects.create(
-            cancha=campo,
-            comentario=comentarios,
-            usuario=request.user,
-            fecha_hora_inicio=hora_reserva,
-            duracion=1,  # Ajusta la duración según tu lógica
-            precio=20.00  # Ajusta el precio según tu lógica
-        )
+        # Convertir la hora seleccionada a un objeto datetime
+        try:
+            hora_reserva = datetime.strptime(hora_reserva_str, "%H:%M").replace(
+                year=today.year, month=today.month, day=today.day
+            )
+        except ValueError:
+            messages.error(request, "Formato de hora inválido.")
+            return redirect('reservar_campo_confirmado', campo_id=campo.id)
 
-        messages.success(request, "Tu reserva ha sido realizada exitosamente.")
+        if hora_reserva in horas_reservadas:
+            messages.error(request, "La hora seleccionada ya está reservada. Por favor, elige otro horario.")
+        else:
+            try:
+                Reserva.objects.create(
+                    cancha=campo,
+                    comentario=comentarios,
+                    usuario=request.user,
+                    fecha_hora_inicio=hora_reserva,
+                    duracion=1,  # Duración de la reserva, ajusta según tu lógica
+                    precio=20.00  # Precio o cualquier otro campo que necesites
+                )
+                messages.success(request, "Tu reserva ha sido realizada exitosamente.")
+            except ValidationError as e:
+                messages.error(request, "Error al crear la reserva: {}".format(e))
 
-    # Verificar si ya existe una reserva reciente para mostrar los detalles
+    # Mostrar la última reserva realizada por el usuario si existe
     reserva_reciente = Reserva.objects.filter(cancha=campo, usuario=request.user).order_by('-fecha_hora_inicio').first()
     if reserva_reciente:
         hora_reserva = reserva_reciente.fecha_hora_inicio
@@ -259,7 +270,7 @@ def reservar_campo_confirmado(request, campo_id):
 
     return render(request, 'reservar_campo_confirmado.html', {
         'campo': campo,
-        'horarios_disponibles': horarios_disponibles,  # Usamos la lista generada al principio
+        'horarios_disponibles': horarios_disponibles,
         'horas_reservadas': horas_reservadas,
         'hora_reserva': hora_reserva,
         'comentarios': comentarios,

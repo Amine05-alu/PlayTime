@@ -50,4 +50,5 @@ urlpatterns = [
     path('mis_reservas/', views.mis_reservas, name='mis_reservas'),
     path('modificar_reserva/<int:reserva_id>/', views.modificar_reserva, name='modificar_reserva'),
     path('disponible_instalaciones/', views.disponible_instalaciones, name='disponible_instalaciones'),
+    path('instalacion/<int:id>/', views.info_instalacion, name='info_instalacion'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

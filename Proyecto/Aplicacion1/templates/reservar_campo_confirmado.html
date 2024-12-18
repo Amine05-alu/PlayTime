@@ -182,12 +182,22 @@
     <div class="container mt-5">
         <h1 class="text-center mb-4">Reserva Confirmada - {{ campo.nombre }}</h1>
 
-        <!-- Mensaje de éxito -->
+        <!-- Mensaje de éxito o error -->
         {% if mensaje %}
             <div class="alert alert-{{ mensaje.tipo }} alert-dismissible fade show" role="alert">
                 <strong>{{ mensaje.titulo }}</strong> {{ mensaje.descripcion }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+        {% endif %}
+
+        <!-- Mensaje de error cuando el horario está ocupado -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
 
         <div class="row">
@@ -232,7 +242,7 @@
                                     {% else %}
                                         list-group-item-success
                                     {% endif %}">
-                                    {{ hora|date:"H:i" }} 
+                                    {{ hora_reserva|date:"d-m-Y" }}
                                     {% if hora in horas_reservadas %}
                                         (Reservado)
                                     {% else %}
@@ -241,12 +251,13 @@
                                 </li>
                             {% endfor %}
                         </ul>
-                    </div>
+                                            </div>
                 </div>
             </div>
-            
+        </div>
+
         <div class="mt-4 text-center">
-            <a href="{% url 'instalacion_list' %}" class="btn btn-secondary">Volver a las Instalaciones</a>
+            <a href="{% url 'lista_instalaciones' %}" class="btn btn-secondary">Volver a las Instalaciones</a>
             <a href="{% url 'index' %}" class="btn btn-primary">Ir al Inicio</a>
         </div>
     </div>

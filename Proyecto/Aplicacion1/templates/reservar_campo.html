@@ -222,15 +222,22 @@
                                     {% endfor %}
                                 </select>
                             </div>
-
+                        
+                            {% if mensaje %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <strong>{{ mensaje.titulo }}</strong> {{ mensaje.descripcion }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endif %}
+                        
                             <div class="mb-3">
                                 <label for="comentarios" class="form-label">Comentarios (opcional):</label>
                                 <textarea class="form-control" id="comentarios" name="comentarios" rows="3" placeholder="Añade algún detalle sobre tu reserva, si lo deseas."></textarea>
                             </div>
-
+                        
                             <button type="submit" class="btn btn-primary" {% if hora_reserva in horas_reservadas %}disabled{% endif %}>Confirmar Reserva</button>
                         </form>
-                    </div>
+                                            </div>
                 </div>
             </div>
 

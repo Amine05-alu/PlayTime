@@ -21,6 +21,7 @@ class Instalacion(models.Model):
     telefono = models.CharField(max_length=15)
     horario_apertura = models.TimeField()
     horario_cierre = models.TimeField()
+    descripcion = models.TextField(blank=True, null=True)  # La descripción puede ser nula
 
     def __str__(self):
         return self.nombre
