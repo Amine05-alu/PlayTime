@@ -131,44 +131,49 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
+        <div class="container-fluid">
+          <!-- Contenedor flex para centrar el logo -->
+          <div class="d-flex justify-content-center w-100">
             <a class="navbar-brand" href="{% url 'index' %}">PLAYTIME</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                    {{ user.first_name|default:user.username|first|upper }}
-                                </div>
-                                {{ user.first_name|default:user.username }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <!-- Formulario para cerrar sesión -->
-                                <li>
-                                    <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">Registrarse</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+          </div>
+          <!-- Botón de menú responsive -->
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                  aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Bloque derecho: avatar con menú desplegable -->
+            <ul class="navbar-nav ms-auto">
+              {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                      {{ user.first_name|default:user.username|first|upper }}
+                    </div>
+                    {{ user.first_name|default:user.username }}
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
+                      <form action="{% url 'logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                      </form>
+                    </li>
+                  </ul>
+                </li>
+              {% else %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'register' %}">Registrarse</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
         </div>
-    </nav>
-
+      </nav>
+      
     <div class="container mt-5">
         <h1>Detalles de la instalación: {{ instalacion.nombre }}</h1>
 

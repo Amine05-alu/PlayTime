@@ -3,6 +3,7 @@
 <head>
    {% load static %}
    <meta charset="UTF-8">
+   <meta name="description" content="Aquí va un resumen conciso y atractivo del contenido de tu página.">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>Sistema de Reservas</title>
    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -87,7 +88,7 @@
        /* Estilo para el botón "HOLA" */
        .btn-hola {
            background-color: #FF6347; /* Color del botón HOLA */
-           color: white;
+           color: rgb(0, 0, 0);
            padding: 10px 20px;
            font-size: 18px;
            border-radius: 5px;
@@ -100,58 +101,82 @@
            background-color: #FF4500; /* Cambio de color al pasar el mouse */
            transform: translateY(-3px);
        }
+       .avatar {
+           width: 40px;
+           height: 40px;
+           border-radius: 50%;
+           background-color: #006400; /* Fondo verde para el avatar */
+           color: white;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           font-weight: bold;
+       }
+       .avatar-text {
+           margin-left: 10px; /* Espacio entre avatar y nombre */
+       }
+       .usuario-avatar {
+    margin-left: auto; /* Empuja este bloque hacia la derecha */
+    padding: 0; /* Quita padding extra si es necesario */
+    }
+
    </style>
 </head>
 <body>
-   <!-- Barra de navegación -->
-   <nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'index' %}">PLAYTIME</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'mis_reservas' %}">Mis Reservas</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                {{ user.first_name|default:user.username|first|upper }}
-                            </div>
-                            {{ user.first_name|default:user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <!-- Formulario para cerrar sesión -->
-                            <li>
-                                <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="dropdown-item">Cerrar sesión</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'register' %}">Registrarse</a>
-                    </li>
-                {% endif %}
-            </ul>
-
-            <!-- Buscador de campos por deporte -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+          <!-- Contenedor centrado -->
+          <div class="d-flex justify-content-center align-items-center w-100">
+            <!-- Logo -->
+            <a class="navbar-brand" href="{% url 'index' %}">PLAYTIME</a>
+            <!-- Buscador -->
             <form method="GET" action="{% url 'index' %}" class="d-flex ms-3">
-                <input class="form-control me-2" type="search" name="buscar_deporte" placeholder="Buscar por deporte...(Futbol, tenis, padel etc...)" aria-label="Buscar">
-                <button class="btn btn-outline-light" type="submit">Buscar</button>
+              <input class="form-control me-2" type="search" name="buscar_deporte" placeholder="Buscar por deporte..." aria-label="Buscar">
+              <button class="btn btn-outline-light" type="submit">Buscar</button>
             </form>
+            <!-- Enlace Mis Reservas visible solo para usuarios autenticados -->
+            {% if user.is_authenticated %}
+              <a class="nav-link ms-3" href="{% url 'mis_reservas' %}">Mis Reservas</a>
+            {% endif %}
+          </div>
+          <!-- Botón de menú responsive -->
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                  aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Bloque derecho: avatar con menú desplegable -->
+            <ul class="navbar-nav ms-auto">
+              {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                      {{ user.first_name|default:user.username|first|upper }}
+                    </div>
+                    {{ user.first_name|default:user.username }}
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
+                      <form action="{% url 'logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                      </form>
+                    </li>
+                  </ul>
+                </li>
+              {% else %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'register' %}">Registrarse</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
         </div>
-    </div>
-</nav>
-
+      </nav>
+                                                                    
 <!-- Sección de resultados para el buscador de deportes -->
 {% if buscar_deporte %}
 <section class="container mt-5">
@@ -201,23 +226,23 @@
 
    <!-- Sección de características -->
    <section class="features-section">
-       <div class="container text-center">
-           <div class="row">
-               <div class="col-md-4 feature">
-                   <h3>Fácil de usar</h3>
-                   <p>Reserva en pocos pasos con nuestro sistema intuitivo.</p>
-               </div>
-               <div class="col-md-4 feature">
-                   <h3>Rápido</h3>
-                   <p>Procesamos tus reservas al instante para que no pierdas tiempo.</p>
-               </div>
-               <div class="col-md-4 feature">
-                   <h3>Seguro</h3>
-                   <p>Tus datos están protegidos y tu privacidad está garantizada.</p>
-               </div>
-           </div>
-       </div>
-   </section>
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-md-4 feature">
+                <h2>Fácil de usar</h3>
+                <p>Reserva en pocos pasos con nuestro sistema intuitivo.</p>
+            </div>
+            <div class="col-md-4 feature">
+                <h2>Rápido</h3>
+                <p>Procesamos tus reservas al instante para que no pierdas tiempo.</p>
+            </div>
+            <div class="col-md-4 feature">
+                <h2>Seguro</h3>
+                <p>Tus datos están protegidos y tu privacidad está garantizada.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
 
    <!-- Pie de página -->
